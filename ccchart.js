@@ -443,12 +443,25 @@ window.ccchart =
 
       //Yデータの最大値maxYを求めるfor drawYscale
       this.maxY = _getMax(this, 'maxY')||0;
+
+      //Y軸目盛の最大値(ユーザー指定) by @hiroe_orz17
+      this.yScaleMax = this.op.config.yScaleMax || this.maxY
+
       //データ最大値this.maxYの切り上げ処理 デフォルトmaxYの1/10桁
       if(this.yScaleDecimal !== 'yes')
         _setRoundedUpMax(this, 'maxY', 'roundedUpMaxY');
 
       //データの最小値を求める
       this.minY = _getMin(this, 'minY') || 0;
+
+      //Y軸目盛の最小値(ユーザー指定) by @hiroe_orz17
+      this.yScaleMin = this.op.config.yScaleMin || this.minY;
+      //yScaleMaxを使うように修正 by @hiroe_orz17
+      this.yGapValue = parseFloat((this.yScaleMax - this.yScaleMin) / this.axisXLen, 10);
+
+      //Y軸線の太さの最小値 by @hiroe_orz17
+      this.minLineWidth = 1;
+      if (this.op.config.minLineWidth !== undefined) { this.minLineWidth = this.op.config.minLineWidth; }
 
       //水平目盛り線AxisXの本数
       if(typeof this.op.config.axisXLen === 'number'){
@@ -539,7 +552,6 @@ window.ccchart =
       //[{left: 70, yTitle: "年月"},{left: 206.66666666666666,yTitle: 2014},{left: 343.3333333333333,yTitle: 2015},...]
       this.axisXs = [];
       //[{top: 360}, {top: 333},{top: 306}]
-
 
       //for drawLine, drowHanrei
       //カラーセット
@@ -1019,15 +1031,18 @@ window.ccchart =
             if(count % this.xScaleSkip === 0){
               lineWidth=3;
             } else {
-              lineWidth=1;
+              lineWidth=this.minLineWidth; // by @hiroe_orz17
             }
           }
-          this.ctx.beginPath();
-          this.ctx.lineWidth  = lineWidth;
-          this.ctx.strokeStyle = this.yColor;
-          this.ctx.moveTo(left, this.chartTop);//ライン描画開始
-          this.ctx.lineTo(left, this.chartBottom);//ライン描画終了
-          this.ctx.stroke();
+
+	  if (lineWidth > 0) { // no line when lineWidth == 0 by @hiroe_orz17
+              this.ctx.beginPath();
+              this.ctx.lineWidth  = lineWidth;
+              this.ctx.strokeStyle = this.yColor;
+              this.ctx.moveTo(left, this.chartTop);//ライン描画開始
+              this.ctx.lineTo(left, this.chartBottom);//ライン描画終了
+              this.ctx.stroke();
+	  }
 
           //X方向の水平軸ラベル描画へ
           if(this.type !=='pie')
@@ -1166,7 +1181,8 @@ window.ccchart =
       if(this.type === 'stacked%'){
         val = count * 10 +'%';
       } else {
-        if(expression){this.wkYScale = this.maxY}//小手先修正あとで再考
+        //yScaleMaxを使うように修正 by @hiroe_orz17
+        if(expression){this.wkYScale = this.yScaleMax}//小手先修正あとで再考
         val = this.util.addComma(this, this.wkYScale, yScaleDecimal);
         percent = (this.yScalePercent==='yes')?( ' ('+ count * 10 +'%)' ):'';
       }
@@ -3453,7 +3469,13 @@ window.ccchart =
         for (var i = 3; i < s.length; i += 4) {
           s = s.substring(0, s.length - i) + "," + s.substring(s.length - i);
         }
-        decimal = isNaN(decimal)?'':comma + decimal;
+
+        /* 小数点表示指定された時は整数であっても .0 を追加 by @hiroe_orz17 */
+        if (useDeci, isNaN(decimal)) {
+          decimal = ".0";
+        } else {
+          decimal = isNaN(decimal)?'':comma + decimal;
+        }
         return singn + s + decimal;
       },
       round00: function(val, n) {
