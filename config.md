@@ -17,7 +17,7 @@ var config = {"config": { "type": "line",
 			  "xScaleSkip": 60 * 5,
 			  "useHanrei": "no",
 			  "unit": "m3",
-			  "minLineWidth": 0,
+			  "minLineWidth": 0,     // xScaleSkipでスキップするときに線の太さ(追加)
 			  "yScaleMin": 0,        // Y軸の最小値。選択中のアイテムの最小値を表示します(追加)
 			  "yScaleMax": 4500      // Y軸の最大値。選択中のアイテムの最大値を表示します(追加)
 			},
